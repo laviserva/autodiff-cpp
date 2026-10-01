@@ -1,0 +1,38 @@
+name: CI Multiplataforma
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Descargar codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.25.x'
+
+      - name: Configurar y compilar en Windows
+        if: runner.os == 'Windows'
+        run: |
+          cmake --preset release
+          cmake --build --preset release
+          ctest --preset release
+
+      - name: Configurar y compilar en Linux
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build/release -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/release
+          ctest --test-dir build/release --output-on-failure

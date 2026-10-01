@@ -1,0 +1,37 @@
+# Artefactos de compilación de CMake y builds
+build/
+bin/
+lib/
+out/
+CMakeUserPresets.json
+
+# Archivos temporales de Visual Studio y MSBuild
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+*.dir/
+*.log
+*.tlog
+*.obj
+*.pdb
+*.ilk
+*.idb
+
+# Binarios ejecutables y bibliotecas
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Archivos de configuración de VS Code específicos de usuario
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
