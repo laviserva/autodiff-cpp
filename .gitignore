@@ -16,6 +16,7 @@ CMakeUserPresets.json
 *.pdb
 *.ilk
 *.idb
+/.vscode/
 
 # Binarios ejecutables y bibliotecas
 *.exe
