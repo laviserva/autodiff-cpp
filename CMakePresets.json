@@ -1,24 +1,66 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
-      "architecture": "x64",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "20",
-        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "windows-vs",
+      "displayName": "Windows / Visual Studio 2022",
+      "description": "Generador multi-config: la configuracion se elige con --config al compilar y al testear.",
+      "inherits": "base",
+      "generator": "Visual Studio 17 2022",
+      "architecture": { "value": "x64", "strategy": "set" },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "linux-ninja",
+      "displayName": "Linux / GCC + Ninja",
+      "description": "Generador single-config: la configuracion vive en CMAKE_BUILD_TYPE, no en --config.",
+      "inherits": "base",
+      "generator": "Ninja",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "debug",
-      "inherits": "base"
+      "displayName": "Debug (Windows)",
+      "inherits": "windows-vs"
     },
     {
       "name": "release",
-      "inherits": "base"
+      "displayName": "Release (Windows)",
+      "inherits": "windows-vs"
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "RelWithDebInfo (Windows)",
+      "description": "Optimizado pero con simbolos: es la configuracion del perfilado de la semana 7.",
+      "inherits": "windows-vs"
+    },
+    {
+      "name": "asan-linux",
+      "displayName": "AddressSanitizer + UBSan (Linux)",
+      "description": "Detecta accesos fuera de rango y comportamiento indefinido. Se usa a partir de la semana 4.",
+      "inherits": "linux-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+      }
     }
   ],
   "buildPresets": [
@@ -31,6 +73,19 @@
       "name": "release",
       "configurePreset": "release",
       "configuration": "Release"
+    },
+    {
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "linux-ninja",
+      "configurePreset": "linux-ninja"
+    },
+    {
+      "name": "asan-linux",
+      "configurePreset": "asan-linux"
     }
   ],
   "testPresets": [
@@ -38,9 +93,17 @@
       "name": "release",
       "configurePreset": "release",
       "configuration": "Release",
-      "output": {
-        "outputOnFailure": true
-      }
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "linux-ninja",
+      "configurePreset": "linux-ninja",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "asan-linux",
+      "configurePreset": "asan-linux",
+      "output": { "outputOnFailure": true }
     }
   ]
 }

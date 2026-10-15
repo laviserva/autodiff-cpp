@@ -36,3 +36,6 @@ CMakeUserPresets.json
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Referencias de optimización
+refs/
