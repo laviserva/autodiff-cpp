@@ -12,12 +12,13 @@ enum class DType{
 };
 
 [[nodiscard]] constexpr std::size_t dtype_size(DType dtype) noexcept {
-    switch (dtype) {
+    switch(dtype){
         case DType::Float64: return 8;
         case DType::Float32: return 4;
     }
     return 0;
 }
+
 static_assert(dtype_size(DType::Float64) == sizeof(double), "Float64 debe medir lo mismo que double");
 static_assert(dtype_size(DType::Float32) == sizeof(float), "Float32 debe medir lo mismo que float");
 
@@ -28,16 +29,16 @@ class Tensor{
         std::vector<double> storage_;
         DType dtype_{DType::Float64};
 
-        // Indice multidimensional -> indice plano: suma de indices[i] * strides_[i].
-        [[nodiscard]] std::size_t flat_index(std::span<const std::size_t> indices) const noexcept {
+        // conversión de indices
+        [[nodiscard]] std::size_t flat_index(std::span<const std::size_t> indices) const noexcept{
             std::size_t indice_plano = 0;
-            const std::size_t long_indices = indices.size();
-            for (std::size_t i = 0; i < long_indices; i++){
+            const std::size_t total_indice = indices.size();
+            for(std::size_t i = 0; i < total_indice; i++){
                 indice_plano += indices[i] * strides_[i];
             }
             return indice_plano;
         }
-
+    
     public:
         Tensor() = default;
         explicit Tensor(std::vector<std::size_t> shape):
@@ -48,7 +49,7 @@ class Tensor{
             strides_.resize(shape_.size());
             strides_.back() = 1;
 
-            for (std::size_t i = shape_.size() - 1; i > 0; i--){
+            for(std::size_t i = shape_.size() - 1; i > 0; i--){
                 strides_[i - 1] = strides_[i] * shape_[i];
             }
             storage_.resize(strides_[0] * shape_[0], 0.0);
@@ -59,24 +60,23 @@ class Tensor{
         Tensor(Tensor&&) noexcept = default;
         Tensor& operator=(Tensor&&) noexcept = default;
         ~Tensor() = default;
-
-        // Acceso a un elemento. Dos versiones: una para escribir y otra para leer un const Tensor.
-        [[nodiscard]] double& operator()(std::span<const std::size_t> indices) noexcept {
+        
+        [[nodiscard]] double& operator()(std::span<const std::size_t> indices) noexcept{
+            return storage_[flat_index(indices)];
+        }
+        [[nodiscard]] const double& operator() (std::span<const std::size_t> indices) const noexcept{
             return storage_[flat_index(indices)];
         }
 
-        [[nodiscard]] const double& operator()(std::span<const std::size_t> indices) const noexcept {
-            return storage_[flat_index(indices)];
-        }
-
-        // Getters: const (no modifican), noexcept (no fallan).
-        // Los objetos grandes se devuelven por const& (sin copia); los pequenos, por valor (sin const).
         [[nodiscard]] const std::vector<std::size_t>& shape() const noexcept { return shape_; }
         [[nodiscard]] const std::vector<std::size_t>& strides() const noexcept { return strides_; }
         [[nodiscard]] std::size_t size() const noexcept { return storage_.size(); }
         [[nodiscard]] std::size_t ndim() const noexcept { return shape_.size(); }
         [[nodiscard]] const std::vector<double>& data() const noexcept { return storage_; }
         [[nodiscard]] DType dtype() const noexcept { return dtype_; }
+        [[nodiscard]] std::span<const double> span() const noexcept { return storage_; }
+        [[nodiscard]] std::span<double> span() noexcept { return storage_; }
+
 };
 
 static_assert(std::is_move_constructible_v<Tensor>, "Tensor debe poderse mover");
