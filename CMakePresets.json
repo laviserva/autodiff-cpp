@@ -9,6 +9,7 @@
     {
       "name": "base",
       "hidden": true,
+      "description": "Comun a todos. Sin generador fijo: CMake usa Visual Studio en Windows y Makefiles en Linux.",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "20",
@@ -17,46 +18,30 @@
       }
     },
     {
-      "name": "windows-vs",
-      "displayName": "Windows / Visual Studio 2022",
-      "description": "Generador multi-config: la configuracion se elige con --config al compilar y al testear.",
-      "inherits": "base",
-      "generator": "Visual Studio 17 2022",
-      "architecture": { "value": "x64", "strategy": "set" },
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
-    },
-    {
-      "name": "linux-ninja",
-      "displayName": "Linux / GCC + Ninja",
-      "description": "Generador single-config: la configuracion vive en CMAKE_BUILD_TYPE, no en --config.",
-      "inherits": "base",
-      "generator": "Ninja",
-      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
       "name": "debug",
-      "displayName": "Debug (Windows)",
-      "inherits": "windows-vs"
+      "displayName": "Debug",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     },
     {
       "name": "release",
-      "displayName": "Release (Windows)",
-      "inherits": "windows-vs"
+      "displayName": "Release",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
       "name": "relwithdebinfo",
-      "displayName": "RelWithDebInfo (Windows)",
+      "displayName": "RelWithDebInfo",
       "description": "Optimizado pero con simbolos: es la configuracion del perfilado de la semana 7.",
-      "inherits": "windows-vs"
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
     },
     {
-      "name": "asan-linux",
-      "displayName": "AddressSanitizer + UBSan (Linux)",
-      "description": "Detecta accesos fuera de rango y comportamiento indefinido. Se usa a partir de la semana 4.",
-      "inherits": "linux-ninja",
+      "name": "asan",
+      "displayName": "AddressSanitizer + UBSan (solo Linux)",
+      "description": "Detecta accesos fuera de rango y comportamiento indefinido. MSVC no soporta UBSan, por eso solo Linux.",
+      "inherits": "base",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer -g"
@@ -64,46 +49,15 @@
     }
   ],
   "buildPresets": [
-    {
-      "name": "debug",
-      "configurePreset": "debug",
-      "configuration": "Debug"
-    },
-    {
-      "name": "release",
-      "configurePreset": "release",
-      "configuration": "Release"
-    },
-    {
-      "name": "relwithdebinfo",
-      "configurePreset": "relwithdebinfo",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "linux-ninja",
-      "configurePreset": "linux-ninja"
-    },
-    {
-      "name": "asan-linux",
-      "configurePreset": "asan-linux"
-    }
+    { "name": "debug",          "configurePreset": "debug",          "configuration": "Debug" },
+    { "name": "release",        "configurePreset": "release",        "configuration": "Release" },
+    { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo", "configuration": "RelWithDebInfo" },
+    { "name": "asan",           "configurePreset": "asan",           "configuration": "RelWithDebInfo" }
   ],
   "testPresets": [
-    {
-      "name": "release",
-      "configurePreset": "release",
-      "configuration": "Release",
-      "output": { "outputOnFailure": true }
-    },
-    {
-      "name": "linux-ninja",
-      "configurePreset": "linux-ninja",
-      "output": { "outputOnFailure": true }
-    },
-    {
-      "name": "asan-linux",
-      "configurePreset": "asan-linux",
-      "output": { "outputOnFailure": true }
-    }
+    { "name": "debug",          "configurePreset": "debug",          "configuration": "Debug",          "output": { "outputOnFailure": true } },
+    { "name": "release",        "configurePreset": "release",        "configuration": "Release",        "output": { "outputOnFailure": true } },
+    { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo", "configuration": "RelWithDebInfo", "output": { "outputOnFailure": true } },
+    { "name": "asan",           "configurePreset": "asan",           "configuration": "RelWithDebInfo", "output": { "outputOnFailure": true } }
   ]
 }
