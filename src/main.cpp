@@ -13,11 +13,10 @@ int main() {
     std::cout << "Compilador: Desconocido" << std::endl;
 #endif
 
-#if defined(NDEBUG)
-    std::cout << "Modo: Release" << std::endl;
-#else
-    std::cout << "Modo: Debug" << std::endl;
-#endif
+std::cout << "Estandar C++: " << __cplusplus << std::endl;
+std::cout << "Configuracion: " << BUILD_CONFIG << std::endl;
+std::cout << "Flags base: " << CXX_FLAGS_BASE << std::endl;
+std::cout << "Flags de la configuracion: " << CXX_FLAGS_CONFIG << std::endl;
 
     return 0;
 }

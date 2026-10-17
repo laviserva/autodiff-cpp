@@ -14,6 +14,12 @@ target_include_directories(autodiff_core INTERFACE include)
 add_executable(autodiff_main src/main.cpp)
 target_link_libraries(autodiff_main PRIVATE autodiff_core)
 
+target_compile_definitions(autodiff_main PRIVATE
+  BUILD_CONFIG="$<CONFIG>"
+  CXX_FLAGS_BASE="${CMAKE_CXX_FLAGS}"
+  CXX_FLAGS_CONFIG="$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_DEBUG}>$<$<CONFIG:Release>:${CMAKE_CXX_FLAGS_RELEASE}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_CXX_FLAGS_RELWITHDEBINFO}>"
+)
+
 # Pruebas
 if(BUILD_TESTING)
   enable_testing()
