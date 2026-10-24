@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <utility>
+#include <vector>
 
 #include "tensor.hpp"
 
@@ -98,12 +99,72 @@ void test_semantica_movimiento() {
     std::cout << "OK\n";
 }
 
+void test_tensor_ecalar(){
+    std::cout << "[Test] Tensor escalar vacío... ";
+
+    Tensor original(std::vector<std::size_t>{});
+    CHECK(original.size() == 1);
+    CHECK(original.ndim() == 0);
+
+    std::cout << "Ok\n";
+}
+
+void test_tensor_dim_null(){
+    std::cout << "[Test] Tensor con dimensión cero... ";
+
+    Tensor original(std::vector<std::size_t>{3, 0});
+    CHECK(original.size() == 0);
+
+    std::cout << "Ok\n";
+}
+
+void test_tensor_strides(){
+    std::cout << "[Test] Tensor - Dimensiones unitarias y strides (singleton)... ";
+    Tensor original(std::vector<std::size_t>{1, 5, 1});
+    const std::vector<std::size_t> strides_esperados{5, 1, 1};
+    
+    CHECK(original.size() == 5);
+    CHECK(original.strides() == strides_esperados);
+
+    std::cout << "OK\n";
+}
+
+void test_excepciones_at(){
+    std::cout << "[Test] Excepciones en at()... ";
+    Tensor t({2, 3});
+
+    bool lanzo_invalid_agument = false;
+    try{
+        const std::array<std::size_t, 3> coords_mal{0, 0 ,0};
+        static_cast<void>(t.at(coords_mal));
+    } catch (const std::invalid_argument&) {
+        lanzo_invalid_agument = true;
+    }
+    CHECK(lanzo_invalid_agument);
+
+    bool lanzo_out_of_range = false;
+    try{
+        const std::array<std::size_t, 2> coords_fuera{2, 0};
+        static_cast<void>(t.at(coords_fuera));
+    } catch (const std::out_of_range&){
+        lanzo_out_of_range = true;
+    }
+    CHECK(lanzo_out_of_range);
+
+    std::cout << "Ok\n";
+}
+
 int main() {
     std::cout << "=== Ejecutando suite de pruebas de Tensor ===\n";
     test_creacion_y_strides();
     test_acceso_lineal();
     test_semantica_copia();
     test_semantica_movimiento();
+    test_tensor_ecalar();
+    test_tensor_dim_null();
+    test_tensor_strides();
+    test_excepciones_at();
+
     std::cout << "=== Todos los tests pasaron ===\n";
     return EXIT_SUCCESS;
 }
