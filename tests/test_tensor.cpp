@@ -154,6 +154,15 @@ void test_excepciones_at(){
     std::cout << "Ok\n";
 }
 
+template <typename T>
+void test_tensor_generico(DType dtype_esperado) {
+    Tensor<T> t({2, 2});
+    CHECK(t.dtype() == dtype_esperado);
+    CHECK(t.size() == 4);
+    t( std::array<std::size_t, 2>{1, 1} ) = static_cast<T>(7);
+    CHECK(t.at( std::array<std::size_t, 2>{1, 1} ) == static_cast<T>(7));
+}
+
 int main() {
     std::cout << "=== Ejecutando suite de pruebas de Tensor ===\n";
     test_creacion_y_strides();
@@ -164,6 +173,9 @@ int main() {
     test_tensor_dim_null();
     test_tensor_strides();
     test_excepciones_at();
+    test_tensor_generico<double>(DType::Float64);
+    test_tensor_generico<float>(DType::Float32);
+    test_tensor_generico<std::int32_t>(DType::Int32);
 
     std::cout << "=== Todos los tests pasaron ===\n";
     return EXIT_SUCCESS;

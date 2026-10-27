@@ -8,29 +8,48 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 enum class DType {
     Float64,
-    Float32
+    Float32,
+    Int32
 };
 
 [[nodiscard]] constexpr std::size_t dtype_size(DType dtype) noexcept {
     switch (dtype) {
         case DType::Float64: return 8;
         case DType::Float32: return 4;
+        case DType::Int32: return 4;
     }
     return 0;
 }
 
 static_assert(dtype_size(DType::Float64) == sizeof(double), "Float64 must have the same size as double");
 static_assert(dtype_size(DType::Float32) == sizeof(float), "Float32 must have the same size as float");
+static_assert(dtype_size(DType::Int32) == sizeof(std::int32_t), "Int32 must have the same size as int32_t");
 
+template <typename T>
+[[nodiscard]] constexpr DType dtype_of() noexcept {
+    if constexpr (std::is_same_v<T, double> ){
+        return DType::Float64;
+    } else if constexpr (std::is_same_v<T, float> ) {
+        return DType::Float32;
+    } else if constexpr (std::is_same_v<T, std::int32_t>) {
+        return DType::Int32;
+    }
+}
+
+template <typename T = double>
 class Tensor {
+    static_assert(std::is_same_v<T, double> ||
+                  std::is_same_v<T, float> ||
+                  std::is_same_v<T, std::int32_t>,
+                  "Tensor<T> only support float, double or int32_t");
 private:
     std::vector<std::size_t> shape_;
     std::vector<std::size_t> strides_;
-    std::vector<double> storage_;
-    DType dtype_{DType::Float64};
+    std::vector<T> storage_;
 
     // Precondition (checked only by assert in debug builds): valid indices.
     [[nodiscard]] std::size_t flat_index(std::span<const std::size_t> indices) const noexcept {
@@ -73,7 +92,7 @@ public:
             }
             numel *= shape_[i];
         }
-        storage_.assign(numel, 0.0);
+        storage_.assign(numel, T{});
     }
 
     Tensor(const Tensor&) = default;
@@ -83,19 +102,19 @@ public:
     ~Tensor() = default;
 
     // Unchecked access (precondition). Fast.
-    [[nodiscard]] double& operator()(std::span<const std::size_t> indices) noexcept {
+    [[nodiscard]] T& operator()(std::span<const std::size_t> indices) noexcept {
         return storage_[flat_index(indices)];
     }
-    [[nodiscard]] const double& operator()(std::span<const std::size_t> indices) const noexcept {
+    [[nodiscard]] const T& operator()(std::span<const std::size_t> indices) const noexcept {
         return storage_[flat_index(indices)];
     }
 
     // Checked access: throws invalid_argument or out_of_range.
-    [[nodiscard]] double& at(std::span<const std::size_t> indices) {
+    [[nodiscard]] T& at(std::span<const std::size_t> indices) {
         check_indices(indices);
         return storage_[flat_index(indices)];
     }
-    [[nodiscard]] const double& at(std::span<const std::size_t> indices) const {
+    [[nodiscard]] const T& at(std::span<const std::size_t> indices) const {
         check_indices(indices);
         return storage_[flat_index(indices)];
     }
@@ -104,16 +123,24 @@ public:
     [[nodiscard]] const std::vector<std::size_t>& strides() const noexcept { return strides_; }
     [[nodiscard]] std::size_t size() const noexcept { return storage_.size(); }
     [[nodiscard]] std::size_t ndim() const noexcept { return shape_.size(); }
-    [[nodiscard]] const std::vector<double>& data() const noexcept { return storage_; }
-    [[nodiscard]] DType dtype() const noexcept { return dtype_; }
-    [[nodiscard]] std::span<const double> span() const noexcept { return storage_; }
-    [[nodiscard]] std::span<double> span() noexcept { return storage_; }
+    [[nodiscard]] const std::vector<T>& data() const noexcept { return storage_; }
+    [[nodiscard]] DType dtype() const noexcept { return dtype_of<T>(); }
+    [[nodiscard]] std::span<const T> span() const noexcept { return storage_; }
+    [[nodiscard]] std::span<T> span() noexcept { return storage_; }
 };
 
-static_assert(std::is_move_constructible_v<Tensor>, "Tensor must be move constructible");
-static_assert(std::is_copy_constructible_v<Tensor>, "Tensor must be copy constructible");
-static_assert(!std::is_convertible_v<std::vector<std::size_t>, Tensor>,
-              "The constructor must be explicit: a vector must not implicitly convert to a Tensor");
-static_assert(std::is_copy_assignable_v<Tensor>, "Tensor must be copy assignable");
-static_assert(std::is_nothrow_move_constructible_v<Tensor>, "Tensor must be nothrow move constructible");
-static_assert(std::is_nothrow_move_assignable_v<Tensor>, "Tensor must be nothrow move assignable");
+template <typename T>
+constexpr bool tensor_contract_ok() {
+    static_assert(std::is_move_constructible_v<Tensor<T>>);
+    static_assert(std::is_copy_constructible_v<Tensor<T>>);
+    static_assert(std::is_copy_assignable_v<Tensor<T>>);
+    static_assert(std::is_nothrow_move_constructible_v<Tensor<T>>);
+    static_assert(std::is_nothrow_move_assignable_v<Tensor<T>>);
+    static_assert(!std::is_convertible_v<std::vector<std::size_t>, Tensor<T>>,
+                  "The constructor must be explicit");
+    return true;
+}
+
+static_assert(tensor_contract_ok<double>());
+static_assert(tensor_contract_ok<float>());
+static_assert(tensor_contract_ok<std::int32_t>());
